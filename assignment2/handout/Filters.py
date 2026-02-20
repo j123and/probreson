@@ -21,8 +21,8 @@ class FilterSmoother:
     #
     # self.__current_f is the probability distribution resulting from the filtering    
     def filter(self, sensorR : int, f_t : np.array) -> np.array :        #print( self.__f)
-        self.__current_f = f_t
- 
+        self.__current_f = self.__om.get_o_reading(sensorR)@self.__tm.get_T_transp()@f_t 
+        self.__current_f /= np.sum(self.__current_f)
         # add your code here 
 
         return self.__current_f
