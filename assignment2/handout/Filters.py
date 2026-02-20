@@ -37,5 +37,19 @@ class FilterSmoother:
     def smooth(self, sensor_r_seq : np.array, f_k : np.array) -> np.array:
         self.__current_fb = f_k # in case there is no window to smooth over, just return the filtered result
 
-    	# add you code here        
+    	# add you code here
+        self.__current_fb = f_k # in case there is no window to smooth over, just return the filtered result
+
+    	#backward smoothing
+        if len(sensor_r_seq) == 0:
+            return f_k
+
+        b = np.ones_like(f_k)
+        for sensorR in reversed(sensor_r_seq):
+            O = self.__om[sensorR]
+            b = self.__tm @ (O @ b)
+            b = b / np.sum(b)
+
+        fb = f_k * b
+        self.__current_fb = fb / np.sum(fb)
         return self.__current_fb
