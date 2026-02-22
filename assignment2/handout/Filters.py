@@ -34,22 +34,19 @@ class FilterSmoother:
     # calculations / methods, while the inner loop from t to t-k is inside the smoothing.
     # 
     # self.__current_fb is the smoothed result (fb_vector)
-    def smooth(self, sensor_r_seq : np.array, f_k : np.array) -> np.array:
+   def smooth(self, sensor_r_seq : np.array, f_k : np.array) -> np.array:
         self.__current_fb = f_k # in case there is no window to smooth over, just return the filtered result
-
-    	# add you code here
-        self.__current_fb = f_k # in case there is no window to smooth over, just return the filtered result
-
-    	#backward smoothing
         if len(sensor_r_seq) == 0:
             return f_k
 
+        T = self.__tm.get_T()  # get transition matrix
         b = np.ones_like(f_k)
         for sensorR in reversed(sensor_r_seq):
-            O = self.__om[sensorR]
-            b = self.__tm @ (O @ b)
-            b = b / np.sum(b)
+            O = self.__om.get_o_reading(sensorR)
+            b = T @ (O @ b)
+            b /= np.sum(b)
 
         fb = f_k * b
-        self.__current_fb = fb / np.sum(fb)
+        fb /= np.sum(fb)
+        self.__current_fb = fb
         return self.__current_fb
