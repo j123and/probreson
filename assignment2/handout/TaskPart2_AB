@@ -1,0 +1,166 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "## Some comparisons of filtering and smoothing (can be with or without the viewer)\n",
+    "\n",
+    "### Instruction reminders for your tasks 3) and 4)\n",
+    "**You must implement your filtering / smoothing in the FilterSmoother class in the file _Filters.py_. This means also that you can use the visualisation through the Localizer, but you can call filter / smooth also directly from here, without the Localizer. Note also, that you must make use of the given models and the robot simulator in RobotSim! Inspect _Localizer.py_ for inspiration on how to do that!**\n",
+    "\n",
+    "### Hint:\n",
+    "You can of course implement the different evaluations (task 4) in a regular .py-file and run Python from the command line! If you use the notebook, you need to restart the kernel after every change in a .py-file that is called from the notebook.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Main evaluation imports\n",
+    "from models import *\n",
+    "from Filters import FilterSmoother\n",
+    "import numpy as np\n",
+    "import matplotlib.pyplot as plt\n",
+    "import random\n",
+    "from view_control.Localizer import Localizer\n",
+    "\n",
+    "def run_localizer(rows, cols, sensor, lag, steps):\n",
+    "    random.seed(42)\n",
+    "    np.random.seed(42)\n",
+    "\n",
+    "    sm = StateModel(rows, cols)\n",
+    "    loc = Localizer(sm, sensor, lag)\n",
+    "\n",
+    "    errors = []\n",
+    "\n",
+    "    for step in range(steps):\n",
+    "        ret, tsX, tsY, tsH, srX, srY, eX, eY, error, fPositions = loc.update()\n",
+    "        errors.append(error)\n",
+    "\n",
+    "    return np.array(errors)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 4x4 Grid – NUF vs UF (Filtering Only)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "steps = 300\n",
+    "\n",
+    "err_nuf_4 = run_localizer(4,4,0,0,steps)\n",
+    "err_uf_4  = run_localizer(4,4,1,0,steps)\n",
+    "\n",
+    "plt.plot(np.cumsum(err_nuf_4)/np.arange(1,steps+1), label=\"NUF\")\n",
+    "plt.plot(np.cumsum(err_uf_4)/np.arange(1,steps+1), label=\"UF\")\n",
+    "plt.title(\"4x4 Grid - Filtering\")\n",
+    "plt.ylabel(\"Average Manhattan Distance\")\n",
+    "plt.xlabel(\"Time\")\n",
+    "plt.legend()\n",
+    "plt.show()\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 20x20 Grid – NUF vs UF (Filtering Only)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "err_nuf_20 = run_localizer(20,20,0,0,steps)\n",
+    "err_uf_20  = run_localizer(20,20,1,0,steps)\n",
+    "\n",
+    "plt.plot(np.cumsum(err_nuf_20)/np.arange(1,steps+1), label=\"NUF\")\n",
+    "plt.plot(np.cumsum(err_uf_20)/np.arange(1,steps+1), label=\"UF\")\n",
+    "plt.title(\"20x20 Grid - Filtering\")\n",
+    "plt.ylabel(\"Average Manhattan Distance\")\n",
+    "plt.xlabel(\"Time\")\n",
+    "plt.legend()\n",
+    "plt.show()\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### 10x20 Grid – Filtering vs Smoothing (NUF Sensor)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "err_filter = run_localizer(10,20,0,0,steps)\n",
+    "err_smooth = run_localizer(10,20,0,5,steps)\n",
+    "\n",
+    "plt.plot(np.cumsum(err_filter)/np.arange(1,steps+1), label=\"Filtering\")\n",
+    "plt.plot(np.cumsum(err_smooth)/np.arange(1,steps+1), label=\"Smoothing (lag=5)\")\n",
+    "plt.title(\"10x20 Grid - NUF\")\n",
+    "plt.ylabel(\"Average Manhattan Distance\")\n",
+    "plt.xlabel(\"Time\")\n",
+    "plt.legend()\n",
+    "plt.show()\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
+   "source": [
+    "### Quick Single Run Test (Fast Check)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "steps_test = 100\n",
+    "r, c = 8, 8\n",
+    "\n",
+    "sm = StateModel(r, c)\n",
+    "loc = Localizer(sm, 0, 5)\n",
+    "\n",
+    "tot_err = 0\n",
+    "\n",
+    "for step in range(steps_test):\n",
+    "    ret, tsX, tsY, tsH, srX, srY, eX, eY, error, fPositions = loc.update()\n",
+    "    tot_err += error\n",
+    "\n",
+    "avg_err = tot_err / steps_test\n",
+    "print(\"Average error:\", avg_err)\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": ".venv (3.12.3)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "name": "python",
+   "version": "3.12.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 4
+}
